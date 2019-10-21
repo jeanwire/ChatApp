@@ -1,13 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, LoginManager
+from flask_login import UserMixin, LoginManager, login_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:G8AR7Cseu5bTh9pPttcX@localhost/flowgames'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:G8AR7Cseu5bTh9pPttcX@localhost/chatapp'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -19,19 +19,19 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True, unique=True)
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
-    messages_sent = db.relationship('Message', backref='sender_id')
-    messages_received = db.relationship('Message', backref='receiver_id')
+    messages_sent = db.relationship('Message', foreign_keys='Message.sender', backref='sender_id')
+    messages_received = db.relationship('Message', foreign_keys='Message.receiver', backref='receiver_id')
 
-@property
-def password(self):
-    raise AttributeError('password is not a readable attribute')
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
 
-@password.setter
-def password(self, password):
-    self.password_hash = generate_password_hash(password)
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
 
-def verify_password(self, password):
-    return check_password_hash(self.password_hash, password)
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class Message(db.Model):
     __tablename__ = 'messages'
@@ -51,9 +51,10 @@ def index():
     request_data = request.get_json()
     username = request_data[username]
     password = request_data[password]
-    user_data = json.dumps(User.query.filter_by(username=username).first())
+    user_data = User.query.filter_by(username=username).first()
     authenticated = user_data.verify_password(password)
     if authenticated:
+        login_user(user_data, False)
         return Response(user_data.id, status=200, mimetype='application/json')
 
     return Response(status=401, mimetype='application/json')
@@ -62,5 +63,5 @@ def index():
 @app.route('/chats')
 @login_required
 def chats():
-    pass
+    return '<h1>Chats go here!</h1>'
     # username is stored in frontend, included in post requests
