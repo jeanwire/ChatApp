@@ -1,10 +1,16 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, LoginManager, login_user, login_required
+from flask_login import UserMixin, LoginManager, login_user, login_required, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__)
+
+base_folder = os.path.dirname(__file__)
+sk_file = os.path.join(base_folder, 'secret_key.txt')
+with open(sk_file, 'r') as sk:
+    app.secret_key = sk.read().strip()
 
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:G8AR7Cseu5bTh9pPttcX@localhost/chatapp'
@@ -46,6 +52,10 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+@app.route('/')
+def test():
+    return '<h1>Flask is working</h1>'
+
 @app.route('/login', methods=['POST'])
 def index():
     request_data = request.get_json()
@@ -56,8 +66,14 @@ def index():
     if authenticated:
         login_user(user_data, False)
         return Response(user_data.id, status=200, mimetype='application/json')
-
     return Response(status=401, mimetype='application/json')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return Response(status=200, mimetype='application/json')
 
 
 @app.route('/chats')

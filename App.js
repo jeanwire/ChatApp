@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, Text, View, TextInput, Button } from 'react-native';
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -8,14 +8,12 @@ export default function App() {
     return(
       <Login
         setLoggedIn={setLoggedIn}
-        loginUsed={loginUsed}
-        setLoginUsed={setLoginUsed}
       />
     )
   }
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+      <Text>Chats go here!</Text>
     </View>
   );
 }
@@ -36,10 +34,12 @@ function Login(props) {
         password: password
       })
     })
+    .then(res => res.json())
     .then(res => handleResponse(res))
-  }, [loginUsed]);
+  }, [username, password]);
 
   const handleResponse = (response) => {
+    console.log(response);
     if (response.status === 200) {
       setLoggedIn(true);
     }
@@ -48,8 +48,10 @@ function Login(props) {
     }
   };
 
-  return {
-    <View>
+  return (
+    <View
+      style={{...styles.container}}
+    >
       {loginUsed &&
         <Text
           style={{color: 'red'}}
@@ -72,12 +74,13 @@ function Login(props) {
         }
       />
     </View>
-  }
+  )
 
 }
 
 const styles = StyleSheet.create({
   container: {
+    display: 'flex',
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
